@@ -3,9 +3,9 @@
 ## High Priority
 
 ### 1. Persistence & Reliability
-- [ ] Save queue to `chrome.storage` so it survives browser restarts
-- [ ] Resume incomplete actions after crash/restart
-- [ ] Better retry logic with exponential backoff
+- [x] Save queue to `chrome.storage` so it survives browser restarts
+- [x] Resume incomplete actions after crash/restart
+- [x] Better retry logic with exponential backoff
 
 ### 2. Rate Limiting Protection
 - [ ] Detect Instagram's rate limit responses (429, action blocked)
