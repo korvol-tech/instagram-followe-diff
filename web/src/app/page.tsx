@@ -3,6 +3,7 @@
 import { useState, useCallback, useEffect } from "react";
 import { FileUpload } from "@/components/FileUpload";
 import { ResultsTable } from "@/components/ResultsTable";
+import { ConfirmModal } from "@/components/ConfirmModal";
 import { processInstagramData } from "@/lib/instagram-diff";
 import type { DiffResult, FollowerEntry, FollowingData } from "@/lib/types";
 
@@ -99,6 +100,7 @@ export default function Home() {
   const [error, setError] = useState<string | null>(null);
   const [isProcessing, setIsProcessing] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
+  const [showResetConfirm, setShowResetConfirm] = useState(false);
 
   // Load stored files on mount and auto-process if both exist
   useEffect(() => {
@@ -188,7 +190,11 @@ export default function Home() {
     }
   }, [followersFile, followingFile]);
 
-  const handleReset = useCallback(() => {
+  const handleResetClick = useCallback(() => {
+    setShowResetConfirm(true);
+  }, []);
+
+  const handleResetConfirm = useCallback(() => {
     // Clear storage
     localStorage.removeItem(STORAGE_KEYS.followers);
     localStorage.removeItem(STORAGE_KEYS.following);
@@ -197,6 +203,11 @@ export default function Home() {
     setFollowingFile(null);
     setResult(null);
     setError(null);
+    setShowResetConfirm(false);
+  }, []);
+
+  const handleResetCancel = useCallback(() => {
+    setShowResetConfirm(false);
   }, []);
 
   if (isLoading) {
@@ -266,8 +277,8 @@ export default function Home() {
           <div className="space-y-6">
             <div className="flex justify-end">
               <button
-                onClick={handleReset}
-                className="px-4 py-2 text-sm text-zinc-600 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-zinc-100 transition-colors"
+                onClick={handleResetClick}
+                className="px-4 py-2 text-sm font-medium border border-zinc-300 dark:border-zinc-600 rounded-lg text-zinc-700 dark:text-zinc-300 hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-colors"
                 data-testid="reset-button"
               >
                 Upload New Files
@@ -277,6 +288,16 @@ export default function Home() {
           </div>
         )}
       </main>
+
+      <ConfirmModal
+        isOpen={showResetConfirm}
+        title="Upload New Files?"
+        message="Your current data will be lost. This action cannot be undone."
+        confirmLabel="Continue"
+        cancelLabel="Cancel"
+        onConfirm={handleResetConfirm}
+        onCancel={handleResetCancel}
+      />
     </div>
   );
 }

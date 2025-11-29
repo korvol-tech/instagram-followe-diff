@@ -292,8 +292,92 @@ export function ResultsTable({ result }: ResultsTableProps) {
         {currentTab.description}
       </p>
 
-      {/* Table */}
-      <div className="overflow-x-auto rounded-lg border border-zinc-200 dark:border-zinc-700">
+      {/* Select All (mobile) */}
+      {extensionConnected && filteredUsers.length > 0 && (
+        <div className="md:hidden flex items-center gap-2 mb-4 p-3 bg-zinc-50 dark:bg-zinc-800 rounded-lg">
+          <input
+            type="checkbox"
+            checked={
+              filteredUsers.length > 0 &&
+              selectedUsers.size === filteredUsers.length
+            }
+            onChange={handleSelectAll}
+            className="w-4 h-4 rounded border-zinc-300 dark:border-zinc-600"
+            data-testid="select-all-checkbox-mobile"
+          />
+          <span className="text-sm text-zinc-600 dark:text-zinc-400">
+            Select all
+          </span>
+        </div>
+      )}
+
+      {/* Mobile List View */}
+      <div className="md:hidden rounded-lg border border-zinc-200 dark:border-zinc-700 divide-y divide-zinc-200 dark:divide-zinc-700" data-testid="results-cards">
+        {filteredUsers.length === 0 ? (
+          <div className="p-8 text-center text-zinc-500 dark:text-zinc-400">
+            No users found
+          </div>
+        ) : (
+          filteredUsers.map((user, index) => (
+            <div
+              key={user.username}
+              className={`px-3 py-2 flex items-center gap-3 ${
+                extensionConnected && selectedUsers.has(user.username)
+                  ? "bg-blue-50 dark:bg-blue-900/20"
+                  : ""
+              }`}
+            >
+              {extensionConnected && (
+                <input
+                  type="checkbox"
+                  checked={selectedUsers.has(user.username)}
+                  onChange={() => handleSelectUser(user.username)}
+                  className="w-4 h-4 rounded border-zinc-300 dark:border-zinc-600 flex-shrink-0"
+                  data-testid={`checkbox-${user.username}`}
+                />
+              )}
+              <span className="text-xs text-zinc-400 dark:text-zinc-500 w-6 flex-shrink-0">
+                {index + 1}
+              </span>
+              <div className="flex-1 min-w-0">
+                <a
+                  href={user.profileUrl}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="text-sm font-medium text-blue-600 dark:text-blue-400 hover:text-blue-700 dark:hover:text-blue-300 hover:underline truncate flex items-center gap-1"
+                  data-testid={`profile-link-${user.username}`}
+                >
+                  <span className="truncate">{user.username}</span>
+                  <svg className="w-3 h-3 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
+                  </svg>
+                </a>
+              </div>
+              {extensionConnected && (
+                <button
+                  onClick={() => handleSingleAction(user)}
+                  disabled={processingUsers.has(user.username)}
+                  className={`px-2 py-1 text-xs font-medium rounded transition-colors flex-shrink-0 ${
+                    currentTab.action === "unfollow"
+                      ? "bg-red-100 text-red-700 hover:bg-red-200 dark:bg-red-900/30 dark:text-red-400 dark:hover:bg-red-900/50"
+                      : "bg-blue-100 text-blue-700 hover:bg-blue-200 dark:bg-blue-900/30 dark:text-blue-400 dark:hover:bg-blue-900/50"
+                  } disabled:opacity-50 disabled:cursor-not-allowed`}
+                  data-testid={`action-${user.username}`}
+                >
+                  {processingUsers.has(user.username)
+                    ? "..."
+                    : currentTab.action === "unfollow"
+                      ? "Unfollow"
+                      : "Follow"}
+                </button>
+              )}
+            </div>
+          ))
+        )}
+      </div>
+
+      {/* Desktop Table View */}
+      <div className="hidden md:block overflow-x-auto rounded-lg border border-zinc-200 dark:border-zinc-700">
         <table className="w-full" data-testid="results-table">
           <thead className="bg-zinc-50 dark:bg-zinc-800">
             <tr>
@@ -331,7 +415,7 @@ export function ResultsTable({ result }: ResultsTableProps) {
             {filteredUsers.length === 0 ? (
               <tr>
                 <td
-                  colSpan={extensionConnected ? 5 : 3}
+                  colSpan={extensionConnected ? 5 : 4}
                   className="px-4 py-8 text-center text-zinc-500 dark:text-zinc-400"
                 >
                   No users found
@@ -354,7 +438,7 @@ export function ResultsTable({ result }: ResultsTableProps) {
                         checked={selectedUsers.has(user.username)}
                         onChange={() => handleSelectUser(user.username)}
                         className="w-4 h-4 rounded border-zinc-300 dark:border-zinc-600"
-                        data-testid={`checkbox-${user.username}`}
+                        data-testid={`checkbox-desktop-${user.username}`}
                       />
                     </td>
                   )}
@@ -370,7 +454,7 @@ export function ResultsTable({ result }: ResultsTableProps) {
                       target="_blank"
                       rel="noopener noreferrer"
                       className="text-sm text-blue-600 hover:text-blue-700 dark:text-blue-400 dark:hover:text-blue-300 hover:underline"
-                      data-testid={`profile-link-${user.username}`}
+                      data-testid={`profile-link-desktop-${user.username}`}
                     >
                       View Profile
                     </a>
@@ -385,7 +469,7 @@ export function ResultsTable({ result }: ResultsTableProps) {
                             ? "bg-red-100 text-red-700 hover:bg-red-200 dark:bg-red-900/30 dark:text-red-400 dark:hover:bg-red-900/50"
                             : "bg-blue-100 text-blue-700 hover:bg-blue-200 dark:bg-blue-900/30 dark:text-blue-400 dark:hover:bg-blue-900/50"
                         } disabled:opacity-50 disabled:cursor-not-allowed`}
-                        data-testid={`action-${user.username}`}
+                        data-testid={`action-desktop-${user.username}`}
                       >
                         {processingUsers.has(user.username)
                           ? "..."
