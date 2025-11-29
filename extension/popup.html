@@ -1,0 +1,107 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <style>
+    body {
+      width: 300px;
+      padding: 16px;
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      font-size: 14px;
+      color: #262626;
+    }
+    h1 {
+      font-size: 16px;
+      margin: 0 0 12px 0;
+    }
+    .status {
+      padding: 8px 12px;
+      border-radius: 8px;
+      margin-bottom: 12px;
+    }
+    .status.active {
+      background: #d4edda;
+      color: #155724;
+    }
+    .status.idle {
+      background: #f8f9fa;
+      color: #6c757d;
+    }
+    .queue-info {
+      font-size: 13px;
+      color: #666;
+    }
+    .queue-item {
+      display: flex;
+      justify-content: space-between;
+      padding: 6px 0;
+      border-bottom: 1px solid #eee;
+    }
+    .queue-item:last-child {
+      border-bottom: none;
+    }
+    .badge {
+      font-size: 11px;
+      padding: 2px 6px;
+      border-radius: 4px;
+    }
+    .badge.pending { background: #fff3cd; color: #856404; }
+    .badge.processing { background: #cce5ff; color: #004085; }
+    .badge.completed { background: #d4edda; color: #155724; }
+    .badge.failed { background: #f8d7da; color: #721c24; }
+    button {
+      width: 100%;
+      padding: 10px;
+      margin-top: 12px;
+      border: none;
+      border-radius: 8px;
+      background: #0095f6;
+      color: white;
+      cursor: pointer;
+      font-size: 14px;
+    }
+    button:hover {
+      background: #0086e0;
+    }
+    button.danger {
+      background: #ed4956;
+    }
+    button.danger:hover {
+      background: #d63844;
+    }
+    .instructions {
+      margin-top: 12px;
+      padding: 12px;
+      background: #f8f9fa;
+      border-radius: 8px;
+      font-size: 12px;
+      color: #666;
+    }
+  </style>
+</head>
+<body>
+  <h1>Instagram Follower Manager <small style="font-size: 10px; color: #999;">v{{VERSION}}</small></h1>
+
+  <div id="status" class="status idle">
+    Idle - No actions in queue
+  </div>
+
+  <div id="queue-container" style="display: none;">
+    <h3 style="font-size: 14px; margin: 12px 0 8px;">Queue</h3>
+    <div id="queue-list" class="queue-info"></div>
+    <button id="cancel-btn" class="danger">Cancel All</button>
+  </div>
+
+  <div class="instructions">
+    <strong>How to use:</strong>
+    <ol style="margin: 8px 0 0 0; padding-left: 20px;">
+      <li>Open the Instagram Follower Diff app</li>
+      <li>Upload your followers/following JSON files</li>
+      <li>Select users and click Follow/Unfollow</li>
+      <li>This extension will process them automatically</li>
+    </ol>
+  </div>
+
+  <script type="module" src="popup.js"></script>
+</body>
+</html>
