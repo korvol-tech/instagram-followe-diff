@@ -64,8 +64,18 @@ chrome.tabs.onRemoved.addListener((tabId: number) => {
 const CONFIG = {
   MIN_DELAY: 30000, // 30 seconds minimum between actions
   MAX_DELAY: 60000, // 60 seconds maximum
-  RETRY_ATTEMPTS: 2,
+  RETRY_ATTEMPTS: 3,
+  RETRY_BASE_DELAY: 5000, // 5 seconds base for exponential backoff
 } as const;
+
+// Calculate exponential backoff delay
+function getRetryDelay(attempt: number): number {
+  // Exponential backoff: 5s, 10s, 20s, 40s, etc.
+  const delay = CONFIG.RETRY_BASE_DELAY * Math.pow(2, attempt);
+  // Add some jitter (±20%)
+  const jitter = delay * 0.2 * (Math.random() * 2 - 1);
+  return Math.floor(delay + jitter);
+}
 
 // Load queue on startup
 void loadQueue();
@@ -232,11 +242,17 @@ async function processQueue(): Promise<void> {
 
       if (item.attempts < CONFIG.RETRY_ATTEMPTS) {
         item.status = "pending"; // Retry
+        const retryDelay = getRetryDelay(item.attempts);
+        console.log(
+          `[Extension] Will retry ${item.username} in ${retryDelay / 1000}s (attempt ${item.attempts + 1}/${CONFIG.RETRY_ATTEMPTS})`
+        );
+        void saveQueue();
+        await sleep(retryDelay);
       } else {
         item.status = "failed";
         item.error = error instanceof Error ? error.message : "Unknown error";
+        void saveQueue();
       }
-      void saveQueue();
     }
   }
 
