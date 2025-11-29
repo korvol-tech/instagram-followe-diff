@@ -188,25 +188,15 @@ export function ResultsTable({ result }: ResultsTableProps) {
 
   return (
     <div className="w-full">
-      {/* Extension Status */}
-      <div className="mb-4 flex items-center gap-2">
-        <div
-          className={`w-2 h-2 rounded-full ${
-            extensionConnected === null
-              ? "bg-zinc-400"
-              : extensionConnected
-                ? "bg-green-500"
-                : "bg-red-500"
-          }`}
-        />
-        <span className="text-sm text-zinc-600 dark:text-zinc-400">
-          {extensionConnected === null
-            ? "Checking extension..."
-            : extensionConnected
-              ? "Extension connected"
-              : "Extension not found - install it to enable follow/unfollow"}
-        </span>
-      </div>
+      {/* Extension Status - only show when connected */}
+      {extensionConnected && (
+        <div className="mb-4 flex items-center gap-2">
+          <div className="w-2 h-2 rounded-full bg-green-500" />
+          <span className="text-sm text-zinc-600 dark:text-zinc-400">
+            Extension connected
+          </span>
+        </div>
+      )}
 
       {/* Stats Summary */}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">

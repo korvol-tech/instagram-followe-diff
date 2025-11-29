@@ -98,31 +98,46 @@ export default function Home() {
   const [result, setResult] = useState<DiffResult | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [isProcessing, setIsProcessing] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
 
-  // Load stored files on mount
+  // Load stored files on mount and auto-process if both exist
   useEffect(() => {
-    try {
-      const storedFollowers = localStorage.getItem(STORAGE_KEYS.followers);
-      const storedFollowing = localStorage.getItem(STORAGE_KEYS.following);
+    const loadStoredFiles = async () => {
+      try {
+        const storedFollowers = localStorage.getItem(STORAGE_KEYS.followers);
+        const storedFollowing = localStorage.getItem(STORAGE_KEYS.following);
 
-      if (storedFollowers) {
-        setFollowersFile(JSON.parse(storedFollowers) as StoredFile);
+        if (storedFollowers && storedFollowing) {
+          // Both files exist - load and process them
+          const followers = JSON.parse(storedFollowers) as StoredFile;
+          const following = JSON.parse(storedFollowing) as StoredFile;
+
+          const followersData: FollowerEntry[] = JSON.parse(followers.content);
+          const followingData: FollowingData = JSON.parse(following.content);
+
+          const diffResult = processInstagramData(followersData, followingData);
+
+          setFollowersFile(followers);
+          setFollowingFile(following);
+          setResult(diffResult);
+        } else {
+          // Only some or no files - just load what we have
+          if (storedFollowers) {
+            setFollowersFile(JSON.parse(storedFollowers) as StoredFile);
+          }
+          if (storedFollowing) {
+            setFollowingFile(JSON.parse(storedFollowing) as StoredFile);
+          }
+        }
+      } catch {
+        // Ignore storage errors
+      } finally {
+        setIsLoading(false);
       }
-      if (storedFollowing) {
-        setFollowingFile(JSON.parse(storedFollowing) as StoredFile);
-      }
-    } catch {
-      // Ignore storage errors
-    }
+    };
+
+    void loadStoredFiles();
   }, []);
-
-  // Auto-process when both files are loaded from storage
-  useEffect(() => {
-    if (followersFile && followingFile && !result && !isProcessing) {
-      void handleProcess();
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [followersFile, followingFile]);
 
   const handleFileSelect = useCallback(
     async (file: File, type: "followers" | "following") => {
@@ -183,6 +198,17 @@ export default function Home() {
     setResult(null);
     setError(null);
   }, []);
+
+  if (isLoading) {
+    return (
+      <div className="min-h-screen bg-zinc-50 dark:bg-zinc-900 flex items-center justify-center">
+        <div className="text-center">
+          <div className="inline-block w-8 h-8 border-4 border-zinc-300 dark:border-zinc-600 border-t-blue-600 rounded-full animate-spin mb-4" />
+          <p className="text-zinc-600 dark:text-zinc-400">Loading...</p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-zinc-50 dark:bg-zinc-900">
