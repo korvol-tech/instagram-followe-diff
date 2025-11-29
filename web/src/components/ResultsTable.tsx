@@ -2,8 +2,8 @@
 
 import { useState, useEffect, useCallback } from "react";
 import type { User, DiffResult } from "@/lib/types";
-import type { ActionType } from "@shared/types";
-import { pingExtension, sendToExtension } from "@/lib/extension";
+import type { ActionType, QueueItem } from "@shared/types";
+import { pingExtension, sendToExtension, getExtensionStatus } from "@/lib/extension";
 
 type TabKey = "notFollowingBack" | "youDontFollowBack" | "mutualFollowers";
 
@@ -51,6 +51,7 @@ export function ResultsTable({ result }: ResultsTableProps) {
   const [isProcessing, setIsProcessing] = useState(false);
   const [processingUsers, setProcessingUsers] = useState<Set<string>>(new Set());
   const [statusMessage, setStatusMessage] = useState<string | null>(null);
+  const [queueInfo, setQueueInfo] = useState<{ length: number; processing: boolean; queue?: QueueItem[] } | null>(null);
 
   const getUsers = useCallback((tab: TabKey): User[] => {
     return result[tab] || [];
@@ -70,6 +71,41 @@ export function ResultsTable({ result }: ResultsTableProps) {
     };
     checkExtension();
   }, []);
+
+  // Poll for queue status when extension is connected
+  useEffect(() => {
+    if (!extensionConnected) return;
+
+    const pollStatus = async () => {
+      const response = await getExtensionStatus();
+      if (response.success && "queueLength" in response) {
+        const newInfo = {
+          length: response.queueLength ?? 0,
+          processing: response.isProcessing ?? false,
+          queue: response.queue,
+        };
+        setQueueInfo(newInfo);
+
+        // Update status message based on queue state
+        if (newInfo.processing) {
+          const current = newInfo.queue?.find((q) => q.status === "processing");
+          setStatusMessage(
+            current
+              ? `Processing @${current.username}... (${newInfo.length} in queue)`
+              : `Processing... (${newInfo.length} in queue)`
+          );
+        } else if (newInfo.length === 0 && statusMessage?.includes("Queued")) {
+          setStatusMessage("All actions completed!");
+        }
+      }
+    };
+
+    // Poll immediately and then every 2 seconds
+    pollStatus();
+    const interval = setInterval(pollStatus, 2000);
+
+    return () => clearInterval(interval);
+  }, [extensionConnected, statusMessage]);
 
   const handleTabChange = (tab: TabKey) => {
     setActiveTab(tab);
@@ -213,8 +249,8 @@ export function ResultsTable({ result }: ResultsTableProps) {
         ))}
       </div>
 
-      {/* Search and Action Bar */}
-      <div className="flex flex-col sm:flex-row gap-4 mb-4">
+      {/* Search and Action Bar - Sticky */}
+      <div className="sticky top-0 z-10 bg-white dark:bg-zinc-900 py-4 -mx-4 px-4 flex flex-col sm:flex-row gap-4 mb-4 border-b border-zinc-200 dark:border-zinc-700">
         <input
           type="text"
           placeholder="Search username..."

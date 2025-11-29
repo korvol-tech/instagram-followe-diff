@@ -79,16 +79,38 @@ chrome.runtime.onMessageExternal.addListener(
   }
 );
 
-// Listen for messages from content script
+// Listen for messages from content script and popup
 chrome.runtime.onMessage.addListener(
   (
-    request: ActionCompleteMessage,
+    request: ActionCompleteMessage | { action: string },
     _sender: chrome.runtime.MessageSender,
-    _sendResponse: (response: unknown) => void
-  ): void => {
-    if (request.type === "actionComplete") {
+    sendResponse: (response: unknown) => void
+  ): boolean | undefined => {
+    // Handle action complete from content script
+    if ("type" in request && request.type === "actionComplete") {
       console.log("[Extension] Action complete:", request);
-      handleActionComplete(request);
+      handleActionComplete(request as ActionCompleteMessage);
+      return;
+    }
+
+    // Handle requests from popup
+    if ("action" in request) {
+      switch (request.action) {
+        case "getStatus":
+          sendResponse({
+            success: true,
+            queueLength: actionQueue.length,
+            isProcessing,
+            queue: actionQueue,
+          });
+          return;
+
+        case "cancelAll":
+          actionQueue = [];
+          isProcessing = false;
+          sendResponse({ success: true, message: "Queue cleared" });
+          return;
+      }
     }
   }
 );
