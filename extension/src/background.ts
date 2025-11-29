@@ -12,6 +12,46 @@ let actionQueue: QueueItem[] = [];
 let isProcessing = false;
 let currentTab: chrome.tabs.Tab | null = null;
 
+// Storage key for persistence
+const STORAGE_KEY = "actionQueue";
+
+// Save queue to chrome.storage
+async function saveQueue(): Promise<void> {
+  try {
+    await chrome.storage.local.set({ [STORAGE_KEY]: actionQueue });
+    console.log("[Extension] Queue saved to storage");
+  } catch (error) {
+    console.error("[Extension] Failed to save queue:", error);
+  }
+}
+
+// Load queue from chrome.storage
+async function loadQueue(): Promise<void> {
+  try {
+    const result = await chrome.storage.local.get(STORAGE_KEY);
+    if (result[STORAGE_KEY] && Array.isArray(result[STORAGE_KEY])) {
+      actionQueue = result[STORAGE_KEY] as QueueItem[];
+      console.log(`[Extension] Loaded ${actionQueue.length} items from storage`);
+
+      // Reset any "processing" items to "pending" (was interrupted)
+      actionQueue.forEach((item) => {
+        if (item.status === "processing") {
+          item.status = "pending";
+        }
+      });
+
+      // Resume processing if there are pending items
+      const hasPending = actionQueue.some((item) => item.status === "pending");
+      if (hasPending && !isProcessing) {
+        console.log("[Extension] Resuming queue processing...");
+        void processQueue();
+      }
+    }
+  } catch (error) {
+    console.error("[Extension] Failed to load queue:", error);
+  }
+}
+
 // Clear currentTab reference when the tab is closed
 chrome.tabs.onRemoved.addListener((tabId: number) => {
   if (currentTab?.id === tabId) {
@@ -26,6 +66,9 @@ const CONFIG = {
   MAX_DELAY: 60000, // 60 seconds maximum
   RETRY_ATTEMPTS: 2,
 } as const;
+
+// Load queue on startup
+void loadQueue();
 
 // Generate random delay between min and max
 function getRandomDelay(): number {
@@ -69,6 +112,7 @@ chrome.runtime.onMessageExternal.addListener(
       case "cancelAll":
         actionQueue = [];
         isProcessing = false;
+        void saveQueue();
         sendResponse({ success: true, message: "Queue cleared" });
         return;
 
@@ -108,6 +152,7 @@ chrome.runtime.onMessage.addListener(
         case "cancelAll":
           actionQueue = [];
           isProcessing = false;
+          void saveQueue();
           sendResponse({ success: true, message: "Queue cleared" });
           return;
       }
@@ -136,6 +181,7 @@ function handleBulkAction(
   }));
 
   actionQueue.push(...queueItems);
+  void saveQueue();
 
   sendResponse({
     success: true,
@@ -169,6 +215,7 @@ async function processQueue(): Promise<void> {
     try {
       await processAction(item);
       item.status = "completed";
+      void saveQueue();
 
       // Notify any listeners
       broadcastProgress();
@@ -189,6 +236,7 @@ async function processQueue(): Promise<void> {
         item.status = "failed";
         item.error = error instanceof Error ? error.message : "Unknown error";
       }
+      void saveQueue();
     }
   }
 
