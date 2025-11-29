@@ -270,20 +270,22 @@ export function ResultsTable({ result }: ResultsTableProps) {
           className="flex-1 px-4 py-2 border border-zinc-300 dark:border-zinc-600 rounded-lg bg-white dark:bg-zinc-800 text-zinc-900 dark:text-zinc-100 placeholder-zinc-500"
           data-testid="search-input"
         />
-        <button
-          onClick={handleAction}
-          disabled={selectedUsers.size === 0 || !extensionConnected || isProcessing}
-          className={`px-4 py-2 rounded-lg font-medium transition-colors ${
-            currentTab.action === "unfollow"
-              ? "bg-red-600 hover:bg-red-700 disabled:bg-zinc-300 dark:disabled:bg-zinc-700"
-              : "bg-blue-600 hover:bg-blue-700 disabled:bg-zinc-300 dark:disabled:bg-zinc-700"
-          } text-white disabled:cursor-not-allowed`}
-          data-testid="action-button"
-        >
-          {isProcessing
-            ? "Processing..."
-            : `${currentTab.actionLabel} (${selectedUsers.size})`}
-        </button>
+        {extensionConnected && (
+          <button
+            onClick={handleAction}
+            disabled={selectedUsers.size === 0 || isProcessing}
+            className={`px-4 py-2 rounded-lg font-medium transition-colors ${
+              currentTab.action === "unfollow"
+                ? "bg-red-600 hover:bg-red-700 disabled:bg-zinc-300 dark:disabled:bg-zinc-700"
+                : "bg-blue-600 hover:bg-blue-700 disabled:bg-zinc-300 dark:disabled:bg-zinc-700"
+            } text-white disabled:cursor-not-allowed`}
+            data-testid="action-button"
+          >
+            {isProcessing
+              ? "Processing..."
+              : `${currentTab.actionLabel} (${selectedUsers.size})`}
+          </button>
+        )}
       </div>
 
       {/* Status Message */}
@@ -309,18 +311,20 @@ export function ResultsTable({ result }: ResultsTableProps) {
         <table className="w-full" data-testid="results-table">
           <thead className="bg-zinc-50 dark:bg-zinc-800">
             <tr>
-              <th className="px-4 py-3 text-left">
-                <input
-                  type="checkbox"
-                  checked={
-                    filteredUsers.length > 0 &&
-                    selectedUsers.size === filteredUsers.length
-                  }
-                  onChange={handleSelectAll}
-                  className="w-4 h-4 rounded border-zinc-300 dark:border-zinc-600"
-                  data-testid="select-all-checkbox"
-                />
-              </th>
+              {extensionConnected && (
+                <th className="px-4 py-3 text-left">
+                  <input
+                    type="checkbox"
+                    checked={
+                      filteredUsers.length > 0 &&
+                      selectedUsers.size === filteredUsers.length
+                    }
+                    onChange={handleSelectAll}
+                    className="w-4 h-4 rounded border-zinc-300 dark:border-zinc-600"
+                    data-testid="select-all-checkbox"
+                  />
+                </th>
+              )}
               <th className="px-4 py-3 text-left text-sm font-medium text-zinc-700 dark:text-zinc-300">
                 #
               </th>
@@ -330,16 +334,18 @@ export function ResultsTable({ result }: ResultsTableProps) {
               <th className="px-4 py-3 text-left text-sm font-medium text-zinc-700 dark:text-zinc-300">
                 Profile
               </th>
-              <th className="px-4 py-3 text-left text-sm font-medium text-zinc-700 dark:text-zinc-300">
-                Action
-              </th>
+              {extensionConnected && (
+                <th className="px-4 py-3 text-left text-sm font-medium text-zinc-700 dark:text-zinc-300">
+                  Action
+                </th>
+              )}
             </tr>
           </thead>
           <tbody className="divide-y divide-zinc-200 dark:divide-zinc-700">
             {filteredUsers.length === 0 ? (
               <tr>
                 <td
-                  colSpan={5}
+                  colSpan={extensionConnected ? 5 : 3}
                   className="px-4 py-8 text-center text-zinc-500 dark:text-zinc-400"
                 >
                   No users found
@@ -350,20 +356,22 @@ export function ResultsTable({ result }: ResultsTableProps) {
                 <tr
                   key={user.username}
                   className={`hover:bg-zinc-50 dark:hover:bg-zinc-800/50 ${
-                    selectedUsers.has(user.username)
+                    extensionConnected && selectedUsers.has(user.username)
                       ? "bg-blue-50 dark:bg-blue-900/20"
                       : ""
                   }`}
                 >
-                  <td className="px-4 py-3">
-                    <input
-                      type="checkbox"
-                      checked={selectedUsers.has(user.username)}
-                      onChange={() => handleSelectUser(user.username)}
-                      className="w-4 h-4 rounded border-zinc-300 dark:border-zinc-600"
-                      data-testid={`checkbox-${user.username}`}
-                    />
-                  </td>
+                  {extensionConnected && (
+                    <td className="px-4 py-3">
+                      <input
+                        type="checkbox"
+                        checked={selectedUsers.has(user.username)}
+                        onChange={() => handleSelectUser(user.username)}
+                        className="w-4 h-4 rounded border-zinc-300 dark:border-zinc-600"
+                        data-testid={`checkbox-${user.username}`}
+                      />
+                    </td>
+                  )}
                   <td className="px-4 py-3 text-sm text-zinc-600 dark:text-zinc-400">
                     {index + 1}
                   </td>
@@ -381,24 +389,26 @@ export function ResultsTable({ result }: ResultsTableProps) {
                       View Profile
                     </a>
                   </td>
-                  <td className="px-4 py-3">
-                    <button
-                      onClick={() => handleSingleAction(user)}
-                      disabled={!extensionConnected || processingUsers.has(user.username)}
-                      className={`px-3 py-1 text-xs font-medium rounded transition-colors ${
-                        currentTab.action === "unfollow"
-                          ? "bg-red-100 text-red-700 hover:bg-red-200 dark:bg-red-900/30 dark:text-red-400 dark:hover:bg-red-900/50"
-                          : "bg-blue-100 text-blue-700 hover:bg-blue-200 dark:bg-blue-900/30 dark:text-blue-400 dark:hover:bg-blue-900/50"
-                      } disabled:opacity-50 disabled:cursor-not-allowed`}
-                      data-testid={`action-${user.username}`}
-                    >
-                      {processingUsers.has(user.username)
-                        ? "..."
-                        : currentTab.action === "unfollow"
-                          ? "Unfollow"
-                          : "Follow"}
-                    </button>
-                  </td>
+                  {extensionConnected && (
+                    <td className="px-4 py-3">
+                      <button
+                        onClick={() => handleSingleAction(user)}
+                        disabled={processingUsers.has(user.username)}
+                        className={`px-3 py-1 text-xs font-medium rounded transition-colors ${
+                          currentTab.action === "unfollow"
+                            ? "bg-red-100 text-red-700 hover:bg-red-200 dark:bg-red-900/30 dark:text-red-400 dark:hover:bg-red-900/50"
+                            : "bg-blue-100 text-blue-700 hover:bg-blue-200 dark:bg-blue-900/30 dark:text-blue-400 dark:hover:bg-blue-900/50"
+                        } disabled:opacity-50 disabled:cursor-not-allowed`}
+                        data-testid={`action-${user.username}`}
+                      >
+                        {processingUsers.has(user.username)
+                          ? "..."
+                          : currentTab.action === "unfollow"
+                            ? "Unfollow"
+                            : "Follow"}
+                      </button>
+                    </td>
+                  )}
                 </tr>
               ))
             )}
@@ -409,7 +419,7 @@ export function ResultsTable({ result }: ResultsTableProps) {
       {/* Results count */}
       <p className="mt-4 text-sm text-zinc-500 dark:text-zinc-400">
         Showing {filteredUsers.length} of {getUsers(activeTab).length} users
-        {selectedUsers.size > 0 && ` • ${selectedUsers.size} selected`}
+        {extensionConnected && selectedUsers.size > 0 && ` • ${selectedUsers.size} selected`}
       </p>
     </div>
   );
