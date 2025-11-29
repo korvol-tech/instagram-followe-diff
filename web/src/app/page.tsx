@@ -6,6 +6,77 @@ import { ResultsTable } from "@/components/ResultsTable";
 import { processInstagramData } from "@/lib/instagram-diff";
 import type { DiffResult, FollowerEntry, FollowingData } from "@/lib/types";
 
+function HowToGetFiles() {
+  const [isOpen, setIsOpen] = useState(false);
+
+  return (
+    <div className="mb-6">
+      <button
+        onClick={() => setIsOpen(!isOpen)}
+        className="flex items-center gap-2 text-sm text-blue-600 dark:text-blue-400 hover:text-blue-700 dark:hover:text-blue-300 transition-colors"
+      >
+        <svg
+          className={`w-4 h-4 transition-transform ${isOpen ? "rotate-90" : ""}`}
+          fill="none"
+          stroke="currentColor"
+          viewBox="0 0 24 24"
+        >
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+        </svg>
+        How do I get these files from Instagram?
+      </button>
+
+      {isOpen && (
+        <div className="mt-4 p-4 bg-zinc-50 dark:bg-zinc-700/50 rounded-lg text-sm text-zinc-700 dark:text-zinc-300">
+          <ol className="list-decimal list-inside space-y-3">
+            <li>
+              <strong>Request your data from Instagram:</strong>
+              <ul className="ml-6 mt-1 list-disc list-inside text-zinc-600 dark:text-zinc-400 space-y-1">
+                <li>Open Instagram app or website</li>
+                <li>Go to <strong>Settings → Accounts Center → Your information and permissions</strong></li>
+                <li>Select <strong>Download your information</strong></li>
+                <li>Choose <strong>Download or transfer information</strong></li>
+                <li>Select your Instagram account</li>
+              </ul>
+            </li>
+            <li>
+              <strong>Configure the download:</strong>
+              <ul className="ml-6 mt-1 list-disc list-inside text-zinc-600 dark:text-zinc-400 space-y-1">
+                <li>Choose <strong>Some of your information</strong></li>
+                <li>Select only <strong>Followers and following</strong></li>
+                <li>Choose <strong>Download to device</strong></li>
+                <li>Set format to <strong>JSON</strong> (important!)</li>
+                <li>Set date range to <strong>All time</strong></li>
+                <li>Click <strong>Create files</strong></li>
+              </ul>
+            </li>
+            <li>
+              <strong>Wait for the email:</strong>
+              <ul className="ml-6 mt-1 list-disc list-inside text-zinc-600 dark:text-zinc-400 space-y-1">
+                <li>Instagram will email you when your data is ready (usually within a few hours)</li>
+                <li>Download the ZIP file from the link in the email</li>
+              </ul>
+            </li>
+            <li>
+              <strong>Extract and upload:</strong>
+              <ul className="ml-6 mt-1 list-disc list-inside text-zinc-600 dark:text-zinc-400 space-y-1">
+                <li>Unzip the downloaded file</li>
+                <li>Find <code className="px-1 py-0.5 bg-zinc-200 dark:bg-zinc-600 rounded">followers_and_following/followers_1.json</code></li>
+                <li>Find <code className="px-1 py-0.5 bg-zinc-200 dark:bg-zinc-600 rounded">followers_and_following/following.json</code></li>
+                <li>Upload both files above</li>
+              </ul>
+            </li>
+          </ol>
+
+          <div className="mt-4 p-3 bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800 rounded text-amber-800 dark:text-amber-300">
+            <strong>Note:</strong> Your data never leaves your browser. All processing happens locally on your device.
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
 export default function Home() {
   const [followersFile, setFollowersFile] = useState<File | null>(null);
   const [followingFile, setFollowingFile] = useState<File | null>(null);
@@ -64,6 +135,8 @@ export default function Home() {
 
         {!result ? (
           <div className="bg-white dark:bg-zinc-800 rounded-xl shadow-sm p-6">
+            <HowToGetFiles />
+
             <div className="grid md:grid-cols-2 gap-6 mb-6">
               <FileUpload
                 label="Followers File (followers_1.json)"
