@@ -5,7 +5,7 @@ import type { User, DiffResult } from "@/lib/types";
 import type { ActionType } from "@shared/types";
 import { pingExtension, sendToExtension, getExtensionStatus } from "@/lib/extension";
 
-type TabKey = "notFollowingBack" | "youDontFollowBack" | "mutualFollowers";
+type TabKey = "notFollowingBack" | "youDontFollowBack" | "mutualFollowers" | "followers" | "following";
 
 interface Tab {
   key: TabKey;
@@ -34,6 +34,20 @@ const TABS: Tab[] = [
     key: "mutualFollowers",
     label: "Mutual",
     description: "People who follow you and you follow back",
+    action: "unfollow",
+    actionLabel: "Unfollow Selected",
+  },
+  {
+    key: "followers",
+    label: "All Followers",
+    description: "Everyone who follows you",
+    action: "follow",
+    actionLabel: "Follow Selected",
+  },
+  {
+    key: "following",
+    label: "All Following",
+    description: "Everyone you follow",
     action: "unfollow",
     actionLabel: "Unfollow Selected",
   },
