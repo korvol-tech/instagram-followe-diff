@@ -41,9 +41,16 @@ async function loadQueue(): Promise<void> {
       });
 
       // Resume processing if there are pending items
-      const hasPending = actionQueue.some((item) => item.status === "pending");
-      if (hasPending && !isProcessing) {
-        console.log("[Extension] Resuming queue processing...");
+      const pendingItems = actionQueue.filter((item) => item.status === "pending");
+      if (pendingItems.length > 0 && !isProcessing) {
+        const nextItem = pendingItems[0];
+        const now = Date.now();
+        if (nextItem.nextProcessAt && nextItem.nextProcessAt > now) {
+          const waitTime = Math.round((nextItem.nextProcessAt - now) / 1000);
+          console.log(`[Extension] Resuming queue processing in ${waitTime}s...`);
+        } else {
+          console.log("[Extension] Resuming queue processing...");
+        }
         void processQueue();
       }
     }
@@ -181,13 +188,17 @@ function handleBulkAction(
     return;
   }
 
-  // Add users to queue
-  const queueItems: QueueItem[] = users.map((user) => ({
+  // Add users to queue with staggered processing times
+  const now = Date.now();
+  const queueItems: QueueItem[] = users.map((user, index) => ({
     username: user.username,
     profileUrl: user.profileUrl,
     action,
     status: "pending",
     attempts: 0,
+    createdAt: now,
+    // Stagger processing: first item immediate, rest with random delays
+    nextProcessAt: index === 0 ? now : now + (index * getRandomDelay()),
   }));
 
   actionQueue.push(...queueItems);
@@ -219,23 +230,31 @@ async function processQueue(): Promise<void> {
       break;
     }
 
+    // Check if we need to wait before processing this item
+    const now = Date.now();
+    if (item.nextProcessAt && item.nextProcessAt > now) {
+      const waitTime = item.nextProcessAt - now;
+      console.log(`[Extension] Waiting ${Math.round(waitTime / 1000)}s before processing ${item.username}`);
+      await sleep(waitTime);
+    }
+
     item.status = "processing";
     console.log(`[Extension] Processing: ${item.action} ${item.username}`);
 
     try {
       await processAction(item);
       item.status = "completed";
-      void saveQueue();
 
-      // Notify any listeners
-      broadcastProgress();
-
-      // Wait before next action
-      if (actionQueue.some((i) => i.status === "pending")) {
+      // Schedule next pending item with a delay
+      const nextItem = actionQueue.find((i) => i.status === "pending");
+      if (nextItem) {
         const delay = getRandomDelay();
-        console.log(`[Extension] Waiting ${delay / 1000}s before next action`);
-        await sleep(delay);
+        nextItem.nextProcessAt = Date.now() + delay;
+        console.log(`[Extension] Next action scheduled in ${Math.round(delay / 1000)}s`);
       }
+
+      void saveQueue();
+      broadcastProgress();
     } catch (error) {
       console.error(`[Extension] Error processing ${item.username}:`, error);
       item.attempts++;
@@ -243,11 +262,11 @@ async function processQueue(): Promise<void> {
       if (item.attempts < CONFIG.RETRY_ATTEMPTS) {
         item.status = "pending"; // Retry
         const retryDelay = getRetryDelay(item.attempts);
+        item.nextProcessAt = Date.now() + retryDelay;
         console.log(
-          `[Extension] Will retry ${item.username} in ${retryDelay / 1000}s (attempt ${item.attempts + 1}/${CONFIG.RETRY_ATTEMPTS})`
+          `[Extension] Will retry ${item.username} in ${Math.round(retryDelay / 1000)}s (attempt ${item.attempts + 1}/${CONFIG.RETRY_ATTEMPTS})`
         );
         void saveQueue();
-        await sleep(retryDelay);
       } else {
         item.status = "failed";
         item.error = error instanceof Error ? error.message : "Unknown error";

@@ -17,6 +17,8 @@ export interface QueueItem {
   status: QueueItemStatus;
   attempts: number;
   error?: string;
+  createdAt: number; // Unix timestamp when item was added
+  nextProcessAt?: number; // Unix timestamp when item should be processed next
 }
 
 // Messages from web app to extension

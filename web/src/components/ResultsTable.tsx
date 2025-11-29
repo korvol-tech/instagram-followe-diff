@@ -85,18 +85,13 @@ export function ResultsTable({ result }: ResultsTableProps) {
         };
 
         // Update status message based on queue state
-        if (newInfo.processing) {
-          const current = newInfo.queue?.find((q) => q.status === "processing");
-          setStatusMessage(
-            current
-              ? `Processing @${current.username}... (${newInfo.length} in queue)`
-              : `Processing... (${newInfo.length} in queue)`
-          );
-        } else if (newInfo.queue && newInfo.queue.length > 0) {
-          // Check if all items are completed or failed
-          const allDone = newInfo.queue.every(
-            (q) => q.status === "completed" || q.status === "failed"
-          );
+        if (newInfo.queue && newInfo.queue.length > 0) {
+          const pendingCount = newInfo.queue.filter(
+            (q) => q.status === "pending" || q.status === "processing"
+          ).length;
+          const current = newInfo.queue.find((q) => q.status === "processing");
+          const allDone = pendingCount === 0;
+
           if (allDone) {
             const completed = newInfo.queue.filter((q) => q.status === "completed").length;
             const failed = newInfo.queue.filter((q) => q.status === "failed").length;
@@ -105,6 +100,10 @@ export function ResultsTable({ result }: ResultsTableProps) {
                 ? `Done! ${completed} completed, ${failed} failed.`
                 : `All ${completed} actions completed!`
             );
+          } else if (current) {
+            setStatusMessage(`Processing @${current.username}... (${pendingCount} remaining)`);
+          } else if (pendingCount > 0) {
+            setStatusMessage(`Waiting... (${pendingCount} remaining)`);
           }
         } else if (newInfo.length === 0 && statusMessage?.includes("Processing")) {
           setStatusMessage("All actions completed!");
