@@ -30,31 +30,36 @@ function HowToGetFiles() {
         <div className="mt-4 p-4 bg-zinc-50 dark:bg-zinc-700/50 rounded-lg text-sm text-zinc-700 dark:text-zinc-300">
           <ol className="list-decimal list-inside space-y-3">
             <li>
-              <strong>Request your data from Instagram:</strong>
+              <strong>Navigate to Export your information:</strong>
               <ul className="ml-6 mt-1 list-disc list-inside text-zinc-600 dark:text-zinc-400 space-y-1">
                 <li>Open Instagram app or website</li>
                 <li>Go to <strong>Settings → Accounts Center → Your information and permissions</strong></li>
-                <li>Select <strong>Download your information</strong></li>
-                <li>Choose <strong>Download or transfer information</strong></li>
-                <li>Select your Instagram account</li>
+                <li>Select <strong>Export your information</strong></li>
               </ul>
             </li>
             <li>
-              <strong>Configure the download:</strong>
+              <strong>Select your account and destination:</strong>
               <ul className="ml-6 mt-1 list-disc list-inside text-zinc-600 dark:text-zinc-400 space-y-1">
-                <li>Choose <strong>Some of your information</strong></li>
+                <li>If you have multiple accounts linked (Facebook, Instagram), select your Instagram account</li>
+                <li>Choose <strong>Export to device</strong></li>
+              </ul>
+            </li>
+            <li>
+              <strong>Customize your export:</strong>
+              <ul className="ml-6 mt-1 list-disc list-inside text-zinc-600 dark:text-zinc-400 space-y-1">
+                <li>Click <strong>Customize information</strong></li>
                 <li>Select only <strong>Followers and following</strong></li>
-                <li>Choose <strong>Download to device</strong></li>
                 <li>Set format to <strong>JSON</strong> (important!)</li>
                 <li>Set date range to <strong>All time</strong></li>
-                <li>Click <strong>Create files</strong></li>
+                <li>Click <strong>Start export</strong></li>
               </ul>
             </li>
             <li>
-              <strong>Wait for the email:</strong>
+              <strong>Wait for the report:</strong>
               <ul className="ml-6 mt-1 list-disc list-inside text-zinc-600 dark:text-zinc-400 space-y-1">
-                <li>Instagram will email you when your data is ready (usually within a few hours)</li>
-                <li>Download the ZIP file from the link in the email</li>
+                <li>Instagram will generate your report (this can take a few minutes to hours)</li>
+                <li>You&apos;ll receive an email when it&apos;s ready, or check back in the Export section</li>
+                <li>Download the ZIP file</li>
               </ul>
             </li>
             <li>
