@@ -1,7 +1,8 @@
 ## Bugs
 
-- [ ] The popup shows x items queued even after all items are completed.
-- [ ] The popup shows Cancel All button even after all items are completed.
+- [x] The popup shows x items queued even after all items are completed.
+- [x] The popup shows Cancel All button even after all items are completed.
+- [ ] The web page shows processing status even if some of the items are completed.
 
 
 ## Improvements
