@@ -84,8 +84,9 @@ async function updateStatus(): Promise<void> {
     // Show queue if there are items
     if (response.queue && response.queue.length > 0) {
       queueContainer.style.display = "block";
-      queueList.innerHTML = response.queue
-        .slice(0, 10) // Show first 10
+      // Reverse to show latest on top (most recent additions first)
+      queueList.innerHTML = [...response.queue]
+        .reverse()
         .map(
           (item: QueueItem) => `
           <div class="queue-item">
@@ -95,10 +96,6 @@ async function updateStatus(): Promise<void> {
         `
         )
         .join("");
-
-      if (response.queue.length > 10) {
-        queueList.innerHTML += `<div style="text-align: center; color: #999; padding: 8px;">... and ${response.queue.length - 10} more</div>`;
-      }
 
       // Show Cancel button only if there are pending items
       // Show Clear button only if all items are done
