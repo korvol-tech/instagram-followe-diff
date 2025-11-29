@@ -1,10 +1,20 @@
 "use client";
 
-import { useState, useCallback } from "react";
+import { useState, useCallback, useEffect } from "react";
 import { FileUpload } from "@/components/FileUpload";
 import { ResultsTable } from "@/components/ResultsTable";
 import { processInstagramData } from "@/lib/instagram-diff";
 import type { DiffResult, FollowerEntry, FollowingData } from "@/lib/types";
+
+const STORAGE_KEYS = {
+  followers: "ig-diff-followers",
+  following: "ig-diff-following",
+} as const;
+
+interface StoredFile {
+  name: string;
+  content: string;
+}
 
 function HowToGetFiles() {
   const [isOpen, setIsOpen] = useState(false);
@@ -83,11 +93,61 @@ function HowToGetFiles() {
 }
 
 export default function Home() {
-  const [followersFile, setFollowersFile] = useState<File | null>(null);
-  const [followingFile, setFollowingFile] = useState<File | null>(null);
+  const [followersFile, setFollowersFile] = useState<StoredFile | null>(null);
+  const [followingFile, setFollowingFile] = useState<StoredFile | null>(null);
   const [result, setResult] = useState<DiffResult | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [isProcessing, setIsProcessing] = useState(false);
+
+  // Load stored files on mount
+  useEffect(() => {
+    try {
+      const storedFollowers = localStorage.getItem(STORAGE_KEYS.followers);
+      const storedFollowing = localStorage.getItem(STORAGE_KEYS.following);
+
+      if (storedFollowers) {
+        setFollowersFile(JSON.parse(storedFollowers) as StoredFile);
+      }
+      if (storedFollowing) {
+        setFollowingFile(JSON.parse(storedFollowing) as StoredFile);
+      }
+    } catch {
+      // Ignore storage errors
+    }
+  }, []);
+
+  // Auto-process when both files are loaded from storage
+  useEffect(() => {
+    if (followersFile && followingFile && !result && !isProcessing) {
+      void handleProcess();
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [followersFile, followingFile]);
+
+  const handleFileSelect = useCallback(
+    async (file: File, type: "followers" | "following") => {
+      try {
+        const content = await file.text();
+        const storedFile: StoredFile = { name: file.name, content };
+
+        // Store in localStorage
+        localStorage.setItem(
+          type === "followers" ? STORAGE_KEYS.followers : STORAGE_KEYS.following,
+          JSON.stringify(storedFile)
+        );
+
+        // Update state
+        if (type === "followers") {
+          setFollowersFile(storedFile);
+        } else {
+          setFollowingFile(storedFile);
+        }
+      } catch {
+        setError("Failed to read file");
+      }
+    },
+    []
+  );
 
   const handleProcess = useCallback(async () => {
     if (!followersFile || !followingFile) {
@@ -99,13 +159,8 @@ export default function Home() {
     setError(null);
 
     try {
-      const [followersText, followingText] = await Promise.all([
-        followersFile.text(),
-        followingFile.text(),
-      ]);
-
-      const followersData: FollowerEntry[] = JSON.parse(followersText);
-      const followingData: FollowingData = JSON.parse(followingText);
+      const followersData: FollowerEntry[] = JSON.parse(followersFile.content);
+      const followingData: FollowingData = JSON.parse(followingFile.content);
 
       const diffResult = processInstagramData(followersData, followingData);
       setResult(diffResult);
@@ -119,6 +174,10 @@ export default function Home() {
   }, [followersFile, followingFile]);
 
   const handleReset = useCallback(() => {
+    // Clear storage
+    localStorage.removeItem(STORAGE_KEYS.followers);
+    localStorage.removeItem(STORAGE_KEYS.following);
+
     setFollowersFile(null);
     setFollowingFile(null);
     setResult(null);
@@ -145,12 +204,12 @@ export default function Home() {
             <div className="grid md:grid-cols-2 gap-6 mb-6">
               <FileUpload
                 label="Followers File (followers_1.json)"
-                onFileSelect={setFollowersFile}
+                onFileSelect={(file) => handleFileSelect(file, "followers")}
                 fileName={followersFile?.name}
               />
               <FileUpload
                 label="Following File (following.json)"
-                onFileSelect={setFollowingFile}
+                onFileSelect={(file) => handleFileSelect(file, "following")}
                 fileName={followingFile?.name}
               />
             </div>
