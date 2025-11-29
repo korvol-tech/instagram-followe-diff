@@ -1,16 +1,22 @@
 export type ActionType = "follow" | "unfollow";
 export type QueueItemStatus = "pending" | "processing" | "completed" | "failed";
 
+/**
+ * User data contract between web app and extension.
+ * The web app must provide both username and profileUrl.
+ */
+export interface User {
+  username: string;
+  profileUrl: string;
+}
+
 export interface QueueItem {
   username: string;
+  profileUrl: string;
   action: ActionType;
   status: QueueItemStatus;
   attempts: number;
   error?: string;
-}
-
-export interface User {
-  username: string;
 }
 
 // Messages from web app to extension
@@ -20,7 +26,7 @@ export interface PingRequest {
 
 export interface FollowRequest {
   action: "follow" | "unfollow";
-  users: Array<string | User>;
+  users: User[];
 }
 
 export interface GetStatusRequest {
@@ -42,6 +48,7 @@ export interface PerformActionMessage {
   type: "performAction";
   action: ActionType;
   username: string;
+  profileUrl: string;
 }
 
 // Messages from content script to background
@@ -50,6 +57,7 @@ export interface ActionCompleteMessage {
   success: boolean;
   action: ActionType;
   username: string;
+  profileUrl: string;
   error?: string;
 }
 
@@ -58,6 +66,7 @@ export interface QueueProgressMessage {
   type: "queueProgress";
   queue: {
     username: string;
+    profileUrl: string;
     action: ActionType;
     status: QueueItemStatus;
     error?: string;

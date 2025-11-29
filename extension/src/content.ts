@@ -16,12 +16,16 @@ chrome.runtime.onMessage.addListener(
   ): void => {
     if (request.type === "performAction") {
       console.log("[IG Extension] Performing action:", request);
-      void performAction(request.action, request.username);
+      void performAction(request.action, request.username, request.profileUrl);
     }
   }
 );
 
-async function performAction(action: ActionType, username: string): Promise<void> {
+async function performAction(
+  action: ActionType,
+  username: string,
+  profileUrl: string
+): Promise<void> {
   try {
     // Wait for page to be fully loaded
     await waitForPageReady();
@@ -47,6 +51,7 @@ async function performAction(action: ActionType, username: string): Promise<void
       success: true,
       action,
       username,
+      profileUrl,
     };
     void chrome.runtime.sendMessage(message);
   } catch (error) {
@@ -56,6 +61,7 @@ async function performAction(action: ActionType, username: string): Promise<void
       success: false,
       action,
       username,
+      profileUrl,
       error: error instanceof Error ? error.message : "Unknown error",
     };
     void chrome.runtime.sendMessage(message);

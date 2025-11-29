@@ -88,7 +88,7 @@ chrome.runtime.onMessage.addListener(
 // Handle bulk follow/unfollow request
 function handleBulkAction(
   action: ActionType,
-  users: Array<string | User>,
+  users: User[],
   sendResponse: (response: ExtensionResponse) => void
 ): void {
   if (!users || users.length === 0) {
@@ -98,7 +98,8 @@ function handleBulkAction(
 
   // Add users to queue
   const queueItems: QueueItem[] = users.map((user) => ({
-    username: typeof user === "string" ? user : user.username,
+    username: user.username,
+    profileUrl: user.profileUrl,
     action,
     status: "pending",
     attempts: 0,
@@ -172,16 +173,14 @@ let pendingActionCallback: ((result: ActionCompleteMessage) => void) | null =
 // Process a single action
 function processAction(item: QueueItem): Promise<ActionCompleteMessage> {
   return new Promise((resolve, reject) => {
-    const profileUrl = `https://www.instagram.com/${item.username}/`;
-
     const executeAction = async (): Promise<void> => {
       try {
-        // Open or reuse tab
+        // Open or reuse tab using the profileUrl from the queue item
         if (currentTab?.id) {
-          await chrome.tabs.update(currentTab.id, { url: profileUrl });
+          await chrome.tabs.update(currentTab.id, { url: item.profileUrl });
         } else {
           currentTab = await chrome.tabs.create({
-            url: profileUrl,
+            url: item.profileUrl,
             active: false,
           });
         }
@@ -210,6 +209,7 @@ function processAction(item: QueueItem): Promise<ActionCompleteMessage> {
             type: "performAction",
             action: item.action,
             username: item.username,
+            profileUrl: item.profileUrl,
           });
         }
       } catch (error) {
@@ -251,6 +251,7 @@ function broadcastProgress(): void {
     type: "queueProgress" as const,
     queue: actionQueue.map((i) => ({
       username: i.username,
+      profileUrl: i.profileUrl,
       action: i.action,
       status: i.status,
       error: i.error,
