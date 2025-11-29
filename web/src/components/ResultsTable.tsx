@@ -212,56 +212,38 @@ export function ResultsTable({ result }: ResultsTableProps) {
         </div>
       )}
 
-      {/* Stats Summary */}
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
-        <div className="bg-zinc-100 dark:bg-zinc-800 rounded-lg p-4">
-          <div className="text-2xl font-bold text-zinc-900 dark:text-zinc-100">
-            {result.followers.length}
-          </div>
-          <div className="text-sm text-zinc-600 dark:text-zinc-400">
-            Followers
-          </div>
-        </div>
-        <div className="bg-zinc-100 dark:bg-zinc-800 rounded-lg p-4">
-          <div className="text-2xl font-bold text-zinc-900 dark:text-zinc-100">
-            {result.following.length}
-          </div>
-          <div className="text-sm text-zinc-600 dark:text-zinc-400">
-            Following
-          </div>
-        </div>
-        <div className="bg-zinc-100 dark:bg-zinc-800 rounded-lg p-4">
-          <div className="text-2xl font-bold text-zinc-900 dark:text-zinc-100">
-            {result.mutualFollowers.length}
-          </div>
-          <div className="text-sm text-zinc-600 dark:text-zinc-400">Mutual</div>
-        </div>
-        <div className="bg-zinc-100 dark:bg-zinc-800 rounded-lg p-4">
-          <div className="text-2xl font-bold text-red-600 dark:text-red-400">
-            {result.notFollowingBack.length}
-          </div>
-          <div className="text-sm text-zinc-600 dark:text-zinc-400">
-            Not Following Back
-          </div>
-        </div>
-      </div>
-
-      {/* Tabs */}
-      <div className="flex gap-2 mb-4 border-b border-zinc-200 dark:border-zinc-700">
-        {TABS.map((tab) => (
-          <button
-            key={tab.key}
-            onClick={() => handleTabChange(tab.key)}
-            className={`px-4 py-2 text-sm font-medium transition-colors ${
-              activeTab === tab.key
-                ? "text-blue-600 border-b-2 border-blue-600"
-                : "text-zinc-600 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-zinc-100"
-            }`}
-            data-testid={`tab-${tab.key}`}
-          >
-            {tab.label} ({getUsers(tab.key).length})
-          </button>
-        ))}
+      {/* Stats/Tabs */}
+      <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3 mb-6">
+        {TABS.map((tab) => {
+          const count = getUsers(tab.key).length;
+          const isActive = activeTab === tab.key;
+          const isHighlight = tab.key === "notFollowingBack";
+          return (
+            <button
+              key={tab.key}
+              onClick={() => handleTabChange(tab.key)}
+              className={`p-4 rounded-lg text-left transition-all ${
+                isActive
+                  ? "ring-2 ring-blue-600 bg-blue-50 dark:bg-blue-900/20"
+                  : "bg-zinc-100 dark:bg-zinc-800 hover:bg-zinc-200 dark:hover:bg-zinc-700"
+              }`}
+              data-testid={`tab-${tab.key}`}
+            >
+              <div
+                className={`text-2xl font-bold ${
+                  isHighlight
+                    ? "text-red-600 dark:text-red-400"
+                    : "text-zinc-900 dark:text-zinc-100"
+                }`}
+              >
+                {count}
+              </div>
+              <div className="text-xs text-zinc-600 dark:text-zinc-400 mt-1">
+                {tab.label}
+              </div>
+            </button>
+          );
+        })}
       </div>
 
       {/* Search and Action Bar - Sticky */}
