@@ -12,6 +12,14 @@ let actionQueue: QueueItem[] = [];
 let isProcessing = false;
 let currentTab: chrome.tabs.Tab | null = null;
 
+// Clear currentTab reference when the tab is closed
+chrome.tabs.onRemoved.addListener((tabId: number) => {
+  if (currentTab?.id === tabId) {
+    console.log("[Extension] Tab closed, clearing reference");
+    currentTab = null;
+  }
+});
+
 // Configuration
 const CONFIG = {
   MIN_DELAY: 30000, // 30 seconds minimum between actions
@@ -177,7 +185,16 @@ function processAction(item: QueueItem): Promise<ActionCompleteMessage> {
       try {
         // Open or reuse tab using the profileUrl from the queue item
         if (currentTab?.id) {
-          await chrome.tabs.update(currentTab.id, { url: item.profileUrl });
+          try {
+            await chrome.tabs.update(currentTab.id, { url: item.profileUrl });
+          } catch {
+            // Tab was closed, create a new one
+            currentTab = null;
+            currentTab = await chrome.tabs.create({
+              url: item.profileUrl,
+              active: false,
+            });
+          }
         } else {
           currentTab = await chrome.tabs.create({
             url: item.profileUrl,
