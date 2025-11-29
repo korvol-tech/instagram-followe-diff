@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useCallback } from "react";
 import type { User, DiffResult } from "@/lib/types";
-import type { ActionType, QueueItem } from "@shared/types";
+import type { ActionType } from "@shared/types";
 import { pingExtension, sendToExtension, getExtensionStatus } from "@/lib/extension";
 
 type TabKey = "notFollowingBack" | "youDontFollowBack" | "mutualFollowers";
@@ -51,7 +51,6 @@ export function ResultsTable({ result }: ResultsTableProps) {
   const [isProcessing, setIsProcessing] = useState(false);
   const [processingUsers, setProcessingUsers] = useState<Set<string>>(new Set());
   const [statusMessage, setStatusMessage] = useState<string | null>(null);
-  const [queueInfo, setQueueInfo] = useState<{ length: number; processing: boolean; queue?: QueueItem[] } | null>(null);
 
   const getUsers = useCallback((tab: TabKey): User[] => {
     return result[tab] || [];
@@ -84,7 +83,6 @@ export function ResultsTable({ result }: ResultsTableProps) {
           processing: response.isProcessing ?? false,
           queue: response.queue,
         };
-        setQueueInfo(newInfo);
 
         // Update status message based on queue state
         if (newInfo.processing) {
@@ -94,7 +92,21 @@ export function ResultsTable({ result }: ResultsTableProps) {
               ? `Processing @${current.username}... (${newInfo.length} in queue)`
               : `Processing... (${newInfo.length} in queue)`
           );
-        } else if (newInfo.length === 0 && statusMessage?.includes("Queued")) {
+        } else if (newInfo.queue && newInfo.queue.length > 0) {
+          // Check if all items are completed or failed
+          const allDone = newInfo.queue.every(
+            (q) => q.status === "completed" || q.status === "failed"
+          );
+          if (allDone) {
+            const completed = newInfo.queue.filter((q) => q.status === "completed").length;
+            const failed = newInfo.queue.filter((q) => q.status === "failed").length;
+            setStatusMessage(
+              failed > 0
+                ? `Done! ${completed} completed, ${failed} failed.`
+                : `All ${completed} actions completed!`
+            );
+          }
+        } else if (newInfo.length === 0 && statusMessage?.includes("Processing")) {
           setStatusMessage("All actions completed!");
         }
       }

@@ -165,7 +165,6 @@ async function handleUnfollowConfirmation(): Promise<void> {
         return;
       }
     }
-
     // Also check for role="button" divs
     const divButtons = document.querySelectorAll("div[role='button']");
     for (let i = 0; i < divButtons.length; i++) {
