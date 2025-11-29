@@ -49,6 +49,7 @@ export function ResultsTable({ result }: ResultsTableProps) {
   const [selectedUsers, setSelectedUsers] = useState<Set<string>>(new Set());
   const [extensionConnected, setExtensionConnected] = useState<boolean | null>(null);
   const [isProcessing, setIsProcessing] = useState(false);
+  const [processingUsers, setProcessingUsers] = useState<Set<string>>(new Set());
   const [statusMessage, setStatusMessage] = useState<string | null>(null);
 
   const getUsers = useCallback((tab: TabKey): User[] => {
@@ -112,6 +113,27 @@ export function ResultsTable({ result }: ResultsTableProps) {
         `Queued ${usersToProcess.length} users for ${currentTab.action}. Check the extension popup for progress.`
       );
       setSelectedUsers(new Set());
+    } else {
+      setStatusMessage(`Error: ${response.error}`);
+    }
+  };
+
+  const handleSingleAction = async (user: User) => {
+    setProcessingUsers((prev) => new Set(prev).add(user.username));
+    setStatusMessage(null);
+
+    const response = await sendToExtension(currentTab.action, [user]);
+
+    setProcessingUsers((prev) => {
+      const next = new Set(prev);
+      next.delete(user.username);
+      return next;
+    });
+
+    if (response.success) {
+      setStatusMessage(
+        `Queued ${user.username} for ${currentTab.action}. Check the extension popup for progress.`
+      );
     } else {
       setStatusMessage(`Error: ${response.error}`);
     }
@@ -261,13 +283,16 @@ export function ResultsTable({ result }: ResultsTableProps) {
               <th className="px-4 py-3 text-left text-sm font-medium text-zinc-700 dark:text-zinc-300">
                 Profile
               </th>
+              <th className="px-4 py-3 text-left text-sm font-medium text-zinc-700 dark:text-zinc-300">
+                Action
+              </th>
             </tr>
           </thead>
           <tbody className="divide-y divide-zinc-200 dark:divide-zinc-700">
             {filteredUsers.length === 0 ? (
               <tr>
                 <td
-                  colSpan={4}
+                  colSpan={5}
                   className="px-4 py-8 text-center text-zinc-500 dark:text-zinc-400"
                 >
                   No users found
@@ -308,6 +333,24 @@ export function ResultsTable({ result }: ResultsTableProps) {
                     >
                       View Profile
                     </a>
+                  </td>
+                  <td className="px-4 py-3">
+                    <button
+                      onClick={() => handleSingleAction(user)}
+                      disabled={!extensionConnected || processingUsers.has(user.username)}
+                      className={`px-3 py-1 text-xs font-medium rounded transition-colors ${
+                        currentTab.action === "unfollow"
+                          ? "bg-red-100 text-red-700 hover:bg-red-200 dark:bg-red-900/30 dark:text-red-400 dark:hover:bg-red-900/50"
+                          : "bg-blue-100 text-blue-700 hover:bg-blue-200 dark:bg-blue-900/30 dark:text-blue-400 dark:hover:bg-blue-900/50"
+                      } disabled:opacity-50 disabled:cursor-not-allowed`}
+                      data-testid={`action-${user.username}`}
+                    >
+                      {processingUsers.has(user.username)
+                        ? "..."
+                        : currentTab.action === "unfollow"
+                          ? "Unfollow"
+                          : "Follow"}
+                    </button>
                   </td>
                 </tr>
               ))
